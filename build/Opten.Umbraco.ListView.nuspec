@@ -1,0 +1,21 @@
+﻿<?xml version="1.0"?>
+<package>
+	<metadata>
+		<id>Opten.Umbraco.ListView</id>
+		<version></version>
+		<title>Opten.Umbraco.ListView</title>
+		<authors>OPTEN AG</authors>
+		<owners>OPTEN AG</owners>
+		<projectUrl>https://bitbucket.org/opten/opten-solutions</projectUrl>
+		<description><![CDATA[Extended Umbraco ListView where you can pick which DocumentType to display ]]></description>
+		<iconUrl>http://www.opten.ch/nuget/logo.png</iconUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<releaseNotes></releaseNotes>
+		<tags>opten</tags>
+		<dependencies></dependencies>
+	</metadata>
+	<files>
+		<file src="src\Opten.Umbraco.ListView\bin\Release\Opten.Umbraco.ListView.dll" target="lib\net45" />
+		<file src="src\Opten.Umbraco.ListView.Web.UI\App_Plugins\OPTEN.ListView\**\*.*" target="content\App_Plugins\OPTEN.ListView" />
+	</files>
+</package>
