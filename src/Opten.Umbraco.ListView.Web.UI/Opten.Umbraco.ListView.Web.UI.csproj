@@ -328,8 +328,8 @@
     <Analyzer Include="..\..\packages\Microsoft.CodeAnalysis.Analyzers.1.0.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Opten.Umbraco.ListView\Opten.Umbraco.ListView.csproj">
-      <Project>{71558756-0cec-439e-a097-1feebcc6d0ba}</Project>
+    <ProjectReference Include="..\Opten.Umbraco.ListView\Opten.Umbraco.ListView.csproj">
+      <Project>{f950e790-b0d7-4006-ad65-b8e66a9549b2}</Project>
       <Name>Opten.Umbraco.ListView</Name>
     </ProjectReference>
   </ItemGroup>
