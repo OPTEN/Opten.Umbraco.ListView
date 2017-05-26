@@ -1,13 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.0
+VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Opten.Umbraco.ListView", "src\Opten.Umbraco.ListView\Opten.Umbraco.ListView.csproj", "{71558756-0CEC-439E-A097-1FEEBCC6D0BA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{DA90D6DF-1D98-47A8-B81F-B07FB1CF3F22}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Opten.Umbraco.ListView.Web.UI", "src\Opten.Umbraco.ListView.Web.UI\Opten.Umbraco.ListView.Web.UI.csproj", "{AB4B2F51-30D8-4130-A75A-AC8406FF4C72}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{F3AA2ACD-B4A2-40CC-B1CF-2798331CF089}"
+	ProjectSection(SolutionItems) = preProject
+		build\build.cake = build\build.cake
+		build\Opten.Umbraco.ListView.nuspec = build\Opten.Umbraco.ListView.nuspec
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
