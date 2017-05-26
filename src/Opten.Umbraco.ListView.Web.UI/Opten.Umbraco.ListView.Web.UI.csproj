@@ -284,6 +284,8 @@
     <Content Include="config\applications.config" />
     <Content Include="config\404handlers.config" />
     <Content Include="App_Plugins\OPTEN.ListView\package.manifest" />
+    <Content Include="Views\BlogOverview.cshtml" />
+    <Content Include="Views\TextPage.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -329,7 +331,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Opten.Umbraco.ListView\Opten.Umbraco.ListView.csproj">
+
       <Project>{f950e790-b0d7-4006-ad65-b8e66a9549b2}</Project>
+
       <Name>Opten.Umbraco.ListView</Name>
     </ProjectReference>
   </ItemGroup>
