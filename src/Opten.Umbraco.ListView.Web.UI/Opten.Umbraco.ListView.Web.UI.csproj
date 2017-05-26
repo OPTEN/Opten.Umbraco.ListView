@@ -284,6 +284,8 @@
     <Content Include="config\applications.config" />
     <Content Include="config\404handlers.config" />
     <Content Include="App_Plugins\OPTEN.ListView\package.manifest" />
+    <Content Include="Views\BlogOverview.cshtml" />
+    <Content Include="Views\TextPage.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -328,7 +330,7 @@
     <Analyzer Include="..\..\packages\Microsoft.CodeAnalysis.Analyzers.1.0.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Opten.Umbraco.ListView\Opten.Umbraco.ListView.csproj">
+    <ProjectReference Include="..\Opten.Umbraco.ListView\Opten.Umbraco.ListView.csproj">
       <Project>{71558756-0cec-439e-a097-1feebcc6d0ba}</Project>
       <Name>Opten.Umbraco.ListView</Name>
     </ProjectReference>
