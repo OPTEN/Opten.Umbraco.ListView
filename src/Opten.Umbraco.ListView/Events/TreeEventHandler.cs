@@ -1,7 +1,9 @@
-﻿using Opten.Umbraco.ListView.Extensions;
-using System;
+﻿using AutoMapper;
+using Opten.Umbraco.ListView.Extensions;
 using System.Linq;
 using Umbraco.Core;
+using Umbraco.Core.Models;
+using Umbraco.Web.Models.ContentEditing;
 using Umbraco.Web.Trees;
 
 namespace ClassLibrary1
@@ -13,6 +15,19 @@ namespace ClassLibrary1
 		protected override void ApplicationStarting(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
 		{
 			ContentTreeController.TreeNodesRendering += ContentTreeController_TreeNodesRendering;
+
+			var typeMaps = Mapper.GetAllTypeMaps();
+
+			var contentMapper = typeMaps.First(map => map.DestinationType.Equals(typeof(ContentItemDisplay)) && map.SourceType.Equals(typeof(IContent)));
+
+			contentMapper.AddAfterMapAction((src, dest) =>
+			{
+				var srcTyped = src as IContent;
+				var destTyped = dest as ContentItemDisplay; 
+
+				destTyped.IsChildOfListView = destTyped.IsChildOfListView || srcTyped.Parent().IsInListView(srcTyped.ContentType.Alias);
+				destTyped.IsContainer = destTyped.IsContainer || srcTyped.FindGridListViewContentTypeAliases().Any();
+			});
 		}
 
 		private void ContentTreeController_TreeNodesRendering(TreeControllerBase sender, TreeNodesRenderingEventArgs e)
