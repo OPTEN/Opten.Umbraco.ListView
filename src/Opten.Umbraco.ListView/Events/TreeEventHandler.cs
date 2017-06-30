@@ -25,8 +25,14 @@ namespace ClassLibrary1
 				var srcTyped = src as IContent;
 				var destTyped = dest as ContentItemDisplay; 
 
-				destTyped.IsChildOfListView = destTyped.IsChildOfListView || srcTyped.Parent().IsInListView(srcTyped.ContentType.Alias);
 				destTyped.IsContainer = destTyped.IsContainer || srcTyped.FindGridListViewContentTypeAliases().Any();
+
+				var parent = srcTyped.Parent();
+				if (parent != null)
+				{
+					destTyped.IsChildOfListView = destTyped.IsChildOfListView || parent.IsInListView(srcTyped.ContentType.Alias);
+				}
+				
 			});
 		}
 
