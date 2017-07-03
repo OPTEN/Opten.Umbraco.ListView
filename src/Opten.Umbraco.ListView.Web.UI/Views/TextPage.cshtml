@@ -1,6 +1,12 @@
 ﻿@inherits Umbraco.Web.Mvc.UmbracoTemplatePage
+@using Opten.Umbraco.ListView.Extensions
 @{
-    Layout = "Master.cshtml";
+	Layout = "Master.cshtml";
 }
 
 @CurrentPage.GetGridHtml("content", "fanoe")
+
+@foreach(var module in Model.Content.ListViewChildren())
+{
+	@Html.Template(module)
+}
