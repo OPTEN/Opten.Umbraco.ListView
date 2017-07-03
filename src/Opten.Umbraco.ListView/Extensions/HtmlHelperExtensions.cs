@@ -5,27 +5,20 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using System.Web.Mvc.Html;
-using Umbraco.Core;
 using Umbraco.Core.Models;
 
 namespace Opten.Umbraco.ListView.Extensions
 {
 	public static class HtmlHelperExtensions
 	{
-
-		public static void RenderPublishedContentPartial(this HtmlHelper htmlHelper, IPublishedContent content)
+		public static void RenderTemplate(this HtmlHelper htmlHelper, IPublishedContent content)
 		{
-			htmlHelper.RenderPartial(GetTemplate(content).VirtualPath, content);
-
-		}
-		public static MvcHtmlString PublishedContentPartial(this HtmlHelper htmlHelper, IPublishedContent content)
-		{
-			return htmlHelper.Partial(GetTemplate(content).VirtualPath, content);
+			htmlHelper.RenderPartial(content.GetTemplate().VirtualPath, content);
 		}
 
-		private static ITemplate GetTemplate(IPublishedContent content)
+		public static MvcHtmlString Template(this HtmlHelper htmlHelper, IPublishedContent content)
 		{
-			return ApplicationContext.Current.Services.FileService.GetTemplate(content.TemplateId);
+			return htmlHelper.Partial(content.GetTemplate().VirtualPath, content);
 		}
 	}
 }

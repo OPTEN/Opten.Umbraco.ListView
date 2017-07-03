@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Umbraco.Core.PropertyEditors;
 
-namespace ClassLibrary1
+namespace Opten.Umbraco.ListView.PropertyEditors
 {
 	[PropertyEditor("OPTEN.ListView", "OPTEN: List view", "~/App_Plugins/OPTEN.ListView/listview.html", HideLabel = true, Group = "lists", Icon = "icon-item-arrangement")]
 	public class ListViewPropertyEditor : PropertyEditor

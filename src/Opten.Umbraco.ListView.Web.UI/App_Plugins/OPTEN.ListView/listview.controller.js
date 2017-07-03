@@ -263,6 +263,9 @@
 
 			$scope.actionInProgress = false;
 			$scope.listViewResultSet = data;
+			if (!$scope.listViewResultSet.items) {
+				$scope.listViewResultSet.items = [];
+			}
 			$scope.listViewResultSet.items = $scope.listViewResultSet.items.filter(function (item) {
 				return $scope.options.contentTypeAliases.indexOf("all") >= 0 || $scope.options.contentTypeAliases.indexOf(item.contentTypeAlias.toLowerCase()) >= 0;
 			});
