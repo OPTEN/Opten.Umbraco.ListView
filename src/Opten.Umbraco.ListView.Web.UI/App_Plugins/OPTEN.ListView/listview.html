@@ -18,16 +18,16 @@
 						</a>
 						<ul class="dropdown-menu">
 							<li ng-repeat="contentType in listViewAllowedTypes | orderBy:'name':false">
-								<a href="#/{{entityType}}/{{entityType}}/edit/{{contentId}}?doctype={{contentType.alias}}&create=true">
-									<i class="icon-{{contentType.cssClass}}"></i>
+								<a href="#/content/content/edit/{{contentId}}?doctype={{contentType.alias}}&create=true">
+									<i class="{{contentType.icon}}"></i>
 									{{contentType.name}}
 								</a>
 							</li>
 						</ul>
 					</div>
 					<div class="btn-group" ng-show="listViewAllowedTypes.length === 1">
-						<a class="btn" href="#/{{entityType}}/{{entityType}}/edit/{{contentId}}?doctype={{listViewAllowedTypes[0].alias}}&create=true">
-							<i class="icon-{{listViewAllowedTypes[0].cssClass}}"></i>
+						<a class="btn" href="#/content/content/edit/{{contentId}}?doctype={{listViewAllowedTypes[0].alias}}&create=true">
+							<i class="{{listViewAllowedTypes[0].icon}}"></i>
 							<localize key="actions_create">Create</localize> {{ listViewAllowedTypes[0].name }}
 						</a>
 					</div>
@@ -147,7 +147,7 @@
 							  items="listViewResultSet.items"
 							  selection="selection"
 							  options="options"
-							  entity-type="{{entityType}}"
+							  entity-type="content"
 							  on-get-content="reloadView">
 		</umb-list-view-layout>
 

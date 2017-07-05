@@ -1,4 +1,4 @@
-﻿function listViewController($rootScope, $scope, $routeParams, $injector, $cookieStore, notificationsService, iconHelper, dialogService, editorState, localizationService, $location, appState, $timeout, $q, mediaResource, listViewHelper, userService, navigationService, treeService) {
+﻿function listViewController($rootScope, $scope, $routeParams, $injector, $cookieStore, notificationsService, iconHelper, dialogService, editorState, localizationService, $location, appState, $timeout, $q, mediaResource, listViewHelper, userService, navigationService, treeService, contentResource, contentTypeResource) {
 
 	//this is a quick check to see if we're in create mode, if so just exit - we cannot show children for content
 	// that isn't created yet, if we continue this will use the parent id in the route params which isn't what
@@ -9,45 +9,28 @@
 		return;
 	}
 
-	//Now we need to check if this is for media, members or content because that will depend on the resources we use
-	var contentResource, getContentTypesCallback, getListResultsCallback, deleteItemCallback, getIdCallback, createEditUrlCallback;
+	//default to root id if the id is undefined
+	$scope.contentId = searchContentId($scope);
+	if ($scope.contentId === undefined) {
+		$scope.contentId = $routeParams.id;
+	}
+	if ($scope.contentId === undefined) {
+		$scope.contentId = -1;
+	}
 
-	//check the config for the entity type, or the current section name (since the config is only set in c#, not in pre-vals)
-	if ($scope.model.config.entityType && $scope.model.config.entityType === "member" || appState.getSectionState("currentSection") === "member") {
-		$scope.entityType = "member";
-		contentResource = $injector.get('memberResource');
-		getContentTypesCallback = $injector.get('memberTypeResource').getTypes;
-		getListResultsCallback = contentResource.getPagedResults;
-		deleteItemCallback = contentResource.deleteByKey;
-		getIdCallback = function (selected) {
-			var selectedKey = getItemKey(selected.id);
-			return selectedKey;
-		};
-		createEditUrlCallback = function (item) {
-			return "/" + $scope.entityType + "/" + $scope.entityType + "/edit/" + item.key + "?page=" + $scope.options.pageNumber + "&listName=" + $scope.contentId;
-		};
-	}
-	else {
-		//check the config for the entity type, or the current section name (since the config is only set in c#, not in pre-vals)
-		if ($scope.model.config.entityType && $scope.model.config.entityType === "media" || appState.getSectionState("currentSection") === "media") {
-			$scope.entityType = "media";
-			contentResource = $injector.get('mediaResource');
-			getContentTypesCallback = $injector.get('mediaTypeResource').getAllowedTypes;
+	$scope.isTrashed = $scope.contentId === "-20" || $scope.contentId === "-21";
+
+	// Really ugly but how do we now that the list view is nested??
+	function searchContentId(scope) {
+		if (scope && scope.item && scope.item.id) {
+			return scope.item.id;
 		}
-		else {
-			$scope.entityType = "content";
-			contentResource = $injector.get('contentResource');
-			getContentTypesCallback = $injector.get('contentTypeResource').getAllowedTypes;
+		if (scope.$parent) {
+			return searchContentId(scope.$parent)
 		}
-		getListResultsCallback = contentResource.getChildren;
-		deleteItemCallback = contentResource.deleteById;
-		getIdCallback = function (selected) {
-			return selected.id;
-		};
-		createEditUrlCallback = function (item) {
-			return "/" + $scope.entityType + "/" + $scope.entityType + "/edit/" + item.id + "?page=" + $scope.options.pageNumber;
-		};
+		return undefined;
 	}
+
 
 	$scope.pagination = [];
 	$scope.isNew = false;
@@ -83,59 +66,55 @@
 	//when this is null, we don't check permissions
 	$scope.buttonPermissions = null;
 
-	//When we are dealing with 'content', we need to deal with permissions on child nodes.
-	// Currently there is no real good way to 
-	if ($scope.entityType === "content") {
 
-		var idsWithPermissions = null;
 
-		$scope.buttonPermissions = {
-			canCopy: true,
-			canCreate: true,
-			canDelete: true,
-			canMove: true,
-			canPublish: true,
-			canUnpublish: true
-		};
+	var idsWithPermissions = null;
 
-		$scope.$watch(function () {
-			return $scope.selection.length;
-		}, function (newVal, oldVal) {
+	$scope.buttonPermissions = {
+		canCopy: true,
+		canCreate: true,
+		canDelete: true,
+		canMove: true,
+		canPublish: true,
+		canUnpublish: true
+	};
 
-			if (idsWithPermissions === null && newVal > 0 || idsWithPermissions !== null) {
+	$scope.$watch(function () {
+		return $scope.selection.length;
+	}, function (newVal, oldVal) {
 
-				//get all of the selected ids
-				var ids = _.map($scope.selection, function (i) {
-					return i.id.toString();
-				});
+		if (idsWithPermissions === null && newVal > 0 || idsWithPermissions !== null) {
 
-				//remove the dictionary items that don't have matching ids
-				var filtered = {};
-				_.each(idsWithPermissions, function (value, key, list) {
-					if (_.contains(ids, key)) {
-						filtered[key] = value;
-					}
-				});
-				idsWithPermissions = filtered;
+			//get all of the selected ids
+			var ids = _.map($scope.selection, function (i) {
+				return i.id.toString();
+			});
 
-				//find all ids that we haven't looked up permissions for
-				var existingIds = _.keys(idsWithPermissions);
-				var missingLookup = _.map(_.difference(ids, existingIds), function (i) {
-					return Number(i);
-				});
-
-				if (missingLookup.length > 0) {
-					contentResource.getPermissions(missingLookup).then(function (p) {
-						$scope.buttonPermissions = listViewHelper.getButtonPermissions(p, idsWithPermissions);
-					});
+			//remove the dictionary items that don't have matching ids
+			var filtered = {};
+			_.each(idsWithPermissions, function (value, key, list) {
+				if (_.contains(ids, key)) {
+					filtered[key] = value;
 				}
-				else {
-					$scope.buttonPermissions = listViewHelper.getButtonPermissions({}, idsWithPermissions);
-				}
+			});
+			idsWithPermissions = filtered;
+
+			//find all ids that we haven't looked up permissions for
+			var existingIds = _.keys(idsWithPermissions);
+			var missingLookup = _.map(_.difference(ids, existingIds), function (i) {
+				return Number(i);
+			});
+
+			if (missingLookup.length > 0) {
+				contentResource.getPermissions(missingLookup).then(function (p) {
+					$scope.buttonPermissions = listViewHelper.getButtonPermissions(p, idsWithPermissions);
+				});
 			}
-		});
-
-	}
+			else {
+				$scope.buttonPermissions = listViewHelper.getButtonPermissions({}, idsWithPermissions);
+			}
+		}
+	});
 
 	$scope.options = {
 		contentTypeAliases: ($scope.model.config.contentTypeAliases ? $scope.model.config.contentTypeAliases.split(',') : ["all"]).map(function (contentTypeAlias) { return contentTypeAlias.toLowerCase(); }),
@@ -152,11 +131,11 @@
 		],
 		layout: {
 			layouts: $scope.model.config.layouts,
-			activeLayout: listViewHelper.getLayout($routeParams.id, $scope.model.config.layouts)
+			activeLayout: listViewHelper.getLayout($scope.contentId, $scope.model.config.layouts)
 		},
-		allowBulkPublish: $scope.entityType === 'content' && $scope.model.config.bulkActionPermissions.allowBulkPublish,
-		allowBulkUnpublish: $scope.entityType === 'content' && $scope.model.config.bulkActionPermissions.allowBulkUnpublish,
-		allowBulkCopy: $scope.entityType === 'content' && $scope.model.config.bulkActionPermissions.allowBulkCopy,
+		allowBulkPublish: $scope.model.config.bulkActionPermissions.allowBulkPublish,
+		allowBulkUnpublish: $scope.model.config.bulkActionPermissions.allowBulkUnpublish,
+		allowBulkCopy: $scope.model.config.bulkActionPermissions.allowBulkCopy,
 		allowBulkMove: $scope.model.config.bulkActionPermissions.allowBulkMove,
 		allowBulkDelete: $scope.model.config.bulkActionPermissions.allowBulkDelete
 	};
@@ -180,13 +159,7 @@
 			e.allowSorting = true;
 		}
 
-		// Another special case for members, only fields on the base table (cmsMember) can be used for sorting
-		if (e.isSystem && $scope.entityType === "member") {
-			e.allowSorting = e.alias === 'username' || e.alias === 'email';
-		}
-
 		if (e.isSystem) {
-			//localize the header
 			var key = getLocalizedKey(e.alias);
 			localizationService.localize(key).then(function (v) {
 				e.header = v;
@@ -195,7 +168,7 @@
 	});
 
 	$scope.selectLayout = function (selectedLayout) {
-		$scope.options.layout.activeLayout = listViewHelper.setLayout($routeParams.id, selectedLayout, $scope.model.config.layouts);
+		$scope.options.layout.activeLayout = listViewHelper.setLayout($scope.contentId, selectedLayout, $scope.model.config.layouts);
 	};
 
 	function showNotificationsAndReset(err, reload, successMsg) {
@@ -259,7 +232,7 @@
 
 		listViewHelper.clearSelection($scope.listViewResultSet.items, $scope.folders, $scope.selection);
 
-		getListResultsCallback(id, $scope.options).then(function (data) {
+		contentResource.getChildren(id, $scope.options).then(function (data) {
 
 			$scope.actionInProgress = false;
 			$scope.listViewResultSet = data;
@@ -277,18 +250,9 @@
 				});
 			}
 
-			if (!foldersLoaded && $scope.entityType === 'media') {
-				//The folders aren't loaded - we only need to do this once since we're never changing node ids
-				mediaResource.getChildFolders($scope.contentId)
-					.then(function (folders) {
-						$scope.folders = folders;
-						$scope.viewLoaded = true;
-						foldersLoaded = true;
-					});
 
-			} else {
-				$scope.viewLoaded = true;
-			}
+			$scope.viewLoaded = true;
+
 
 			//NOTE: This might occur if we are requesting a higher page number than what is actually available, for example
 			// if you have more than one page and you delete all items on the last page. In this case, we need to reset to the last
@@ -390,7 +354,7 @@
 
 				var attempt =
 					applySelected(
-						function (selected, index) { return deleteItemCallback(getIdCallback(selected[index])); },
+						function (selected, index) { return contentResource.deleteById(selected[index].id); },
 						function (count, total) {
 							var key = total === 1 ? "bulk_deletedItemOfItem" : "bulk_deletedItemOfItems";
 							return localizationService.localize(key, [count, total]);
@@ -414,7 +378,7 @@
 
 	$scope.publish = function () {
 		applySelected(
-			function (selected, index) { return contentResource.publishById(getIdCallback(selected[index])); },
+			function (selected, index) { return contentResource.publishById(selected[index].id); },
 			function (count, total) {
 				var key = total === 1 ? "bulk_publishedItemOfItem" : "bulk_publishedItemOfItems";
 				return localizationService.localize(key, [count, total]);
@@ -427,7 +391,7 @@
 
 	$scope.unpublish = function () {
 		applySelected(
-			function (selected, index) { return contentResource.unPublish(getIdCallback(selected[index])); },
+			function (selected, index) { return contentResource.unPublish(selected[index].id); },
 			function (count, total) {
 				var key = total === 1 ? "bulk_unpublishedItemOfItem" : "bulk_unpublishedItemOfItems";
 				return localizationService.localize(key, [count, total]);
@@ -441,7 +405,7 @@
 	$scope.move = function () {
 		$scope.moveDialog = {};
 		$scope.moveDialog.title = localizationService.localize("general_move");
-		$scope.moveDialog.section = $scope.entityType;
+		$scope.moveDialog.section = "content";
 		$scope.moveDialog.currentNode = $scope.contentId;
 		$scope.moveDialog.view = "move";
 		$scope.moveDialog.show = true;
@@ -472,7 +436,7 @@
 		var newPath = null;
 		applySelected(
 			function (selected, index) {
-				return contentResource.move({ parentId: target.id, id: getIdCallback(selected[index]) })
+				return contentResource.move({ parentId: target.id, id: selected[index].id })
 					.then(function (path) {
 						newPath = path;
 						return path;
@@ -512,7 +476,7 @@
 	$scope.copy = function () {
 		$scope.copyDialog = {};
 		$scope.copyDialog.title = localizationService.localize("general_copy");
-		$scope.copyDialog.section = $scope.entityType;
+		$scope.copyDialog.section = "content";
 		$scope.copyDialog.currentNode = $scope.contentId;
 		$scope.copyDialog.view = "copy";
 		$scope.copyDialog.show = true;
@@ -535,7 +499,7 @@
 
 	function performCopy(target, relateToOriginal) {
 		applySelected(
-			function (selected, index) { return contentResource.copy({ parentId: target.id, id: getIdCallback(selected[index]), relateToOriginal: relateToOriginal }); },
+			function (selected, index) { return contentResource.copy({ parentId: target.id, id: selected[index].id, relateToOriginal: relateToOriginal }); },
 			function (count, total) {
 				var key = total === 1 ? "bulk_copiedItemOfItem" : "bulk_copiedItemOfItems";
 				return localizationService.localize(key, [count, total]);
@@ -569,7 +533,7 @@
 	function setPropertyValues(result) {
 
 		//set the edit url
-		result.editPath = createEditUrlCallback(result);
+		result.editPath = "/content/content/edit/" + result.id + "?page=" + $scope.options.pageNumber;
 
 		_.each($scope.options.includeProperties, function (e, i) {
 
@@ -608,20 +572,12 @@
 	}
 
 	function initView() {
-		//default to root id if the id is undefined
-		var id = $routeParams.id;
-		if (id === undefined) {
-			id = -1;
-		}
 
-		getContentTypesCallback(id).then(function (response) {
+		contentTypeResource.getAllowedTypes($scope.contentId).then(function (response) {
 			$scope.listViewAllowedTypes = response.filter(function (allowedType) {
 				return $scope.options.contentTypeAliases.indexOf("all") >= 0 || $scope.options.contentTypeAliases.indexOf(allowedType.alias.toLowerCase()) >= 0;
 			});
 		});
-
-		$scope.contentId = id;
-		$scope.isTrashed = id === "-20" || id === "-21";
 
 		$scope.options.allowBulkPublish = $scope.options.allowBulkPublish && !$scope.isTrashed;
 		$scope.options.allowBulkUnpublish = $scope.options.allowBulkUnpublish && !$scope.isTrashed;
@@ -651,8 +607,7 @@
 			case "published":
 				return "content_isPublished";
 			case "contentTypeAlias":
-				//TODO: Check for members
-				return $scope.entityType === "content" ? "content_documentType" : "content_mediatype";
+				return "content_documentType";
 			case "email":
 				return "general_email";
 			case "username":
