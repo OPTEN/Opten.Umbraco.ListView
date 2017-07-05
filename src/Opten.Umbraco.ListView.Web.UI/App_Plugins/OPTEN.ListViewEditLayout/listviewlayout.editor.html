@@ -1,0 +1,23 @@
+﻿<ng-form style="padding:10px 10px 30px;display:block;">
+	<div style="height:40px" ng-if="!content">
+		<umb-load-indicator></umb-load-indicator>
+	</div>
+	<div ng-if="content">
+		<input type="text" class="umb-panel-header-name-input" localize="placeholder" placeholder="Enter a name..." name="headerName" ng-model="content.name" required style="margin-bottom:30px;" />
+		<umb-tabs-nav model="content.tabs"
+						id-suffix="-mini-editor-{{content.id}}">
+		</umb-tabs-nav>
+		<umb-tabs-content>
+			<umb-tab id="tab{{tab.id}}-mini-editor-{{content.id}}"
+						ng-repeat="tab in content.tabs"
+						rel="{{tab.id}}-mini-editor">
+
+				<umb-property property="property"
+								ng-repeat="property in tab.properties">
+					<umb-editor model="property"></umb-editor>
+				</umb-property>
+			</umb-tab>
+		</umb-tabs-content>
+	</div>
+</ng-form>
+

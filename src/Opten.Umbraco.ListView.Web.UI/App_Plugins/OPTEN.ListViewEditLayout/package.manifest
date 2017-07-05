@@ -1,0 +1,8 @@
+﻿{
+	javascript: [
+		'~/App_Plugins/OPTEN.ListViewEditLayout/listvieweditlayout.controller.js'
+	],
+	css: [
+		'~/App_Plugins/OPTEN.ListViewEditLayout/listvieweditlayout.css'
+	]
+}

@@ -23,14 +23,15 @@ namespace ClassLibrary1
 			contentMapper.AddAfterMapAction((src, dest) =>
 			{
 				var srcTyped = src as IContent;
-				var destTyped = dest as ContentItemDisplay; 
+				var destTyped = dest as ContentItemDisplay;
 
-				destTyped.IsContainer = destTyped.IsContainer || srcTyped.FindGridListViewContentTypeAliases().Any();
-
-				var parent = srcTyped.Parent();
-				if (parent != null)
+				if (!destTyped.IsChildOfListView)
 				{
-					destTyped.IsChildOfListView = destTyped.IsChildOfListView || parent.IsInListView(srcTyped.ContentType.Alias);
+					var parent = srcTyped.Parent();
+					if (parent != null)
+					{
+						destTyped.IsChildOfListView = parent.IsInListView(srcTyped.ContentType.Alias);
+					}
 				}
 				
 			});
@@ -40,11 +41,30 @@ namespace ClassLibrary1
 		{
 			if (e.QueryStrings["application"].Equals("content") &&
 				e.QueryStrings["isDialog"].Equals("false") &&
-				string.IsNullOrWhiteSpace(e.QueryStrings["id"]) == false)
+				string.IsNullOrWhiteSpace(e.QueryStrings["id"]) == false && 
+				e.QueryStrings["id"] != "-1")
 			{
 				var content = sender.Services.ContentService.GetById(int.Parse(e.QueryStrings["id"]));
 
-				e.Nodes.RemoveAll(treeNode => treeNode.AdditionalData.ContainsKey("contentType") && content.IsInListView(treeNode.AdditionalData["contentType"].ToString()));
+				for(var i = e.Nodes.Count - 1; i > -1; i--)
+				{
+					var treeNode = e.Nodes[i];
+
+					if(treeNode.AdditionalData.ContainsKey("contentType"))
+					{
+						if(content.IsInListView(treeNode.AdditionalData["contentType"].ToString()))
+						{
+							e.Nodes.RemoveAt(i);
+							continue;
+						}
+
+						if(treeNode.HasChildren)
+						{
+							var node = sender.Services.ContentService.GetById(int.Parse(treeNode.Id.ToString()));
+							treeNode.HasChildren = node.TreeChildren().Any();
+						}
+					}
+				}
 			}
 		}
 	}

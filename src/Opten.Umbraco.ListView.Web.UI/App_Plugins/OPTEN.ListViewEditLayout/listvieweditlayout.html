@@ -1,0 +1,14 @@
+﻿<div ng-controller="OPTEN.ListViewEditLayout" ng-if="items" class="listvieweditlayout">
+	<ng-form>
+			<div class="listvieweditlayout__item" ng-repeat="item in items" ng-class="{ 'listvieweditlayout__item--active' : isSelected(item) }">
+				<div class="listvieweditlayout__header" ng-click="clickItem(item, $index, $event)">
+					<i class="listvieweditlayout__icon icon" ng-class="getIcon(item)"></i>
+					<span class="listvieweditlayout__title icon" ng-bind="item.name"></span>
+				</div>
+				<div class="listvieweditlayout__content" ng-if="isSelected(item)">
+					<op10-list-view-editor ng-model="item"/>
+				</div>
+			</div>
+	</ng-form>
+</div>
+

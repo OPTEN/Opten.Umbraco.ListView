@@ -1,0 +1,69 @@
+﻿
+.listvieweditlayout {
+	border: 1px solid #d8d7d9;
+	border-top: none;
+}
+
+.listvieweditlayout__item {
+	position: relative;
+	text-align: left;
+	background: white;
+}
+
+.listvieweditlayout__header {
+	cursor: pointer;
+	position: relative;
+	font-size: 14px;
+	color: #817f85;
+	cursor: pointer;
+	border-top: 1px solid #d8d7d9;
+	padding: 15px 16px;
+}
+
+	.listvieweditlayout__header:hover {
+		background-color: #f3f3f5;
+	}
+
+.listvieweditlayout__item--active .listvieweditlayout__header {
+	background-color: #f3f3f5;
+}
+
+.listvieweditlayout__icon {
+	margin-right: 12px;
+	font-size: 22px;
+	line-height: 22px;
+	color: #00aea2;
+	vertical-align: middle;
+}
+
+.listvieweditlayout__title {
+	font-size: 14px;
+	font-weight: bold;
+	color: #000;
+}
+
+	.listvieweditlayout__title:hover {
+		text-decoration: underline;
+	}
+
+.listvieweditlayout__content {
+	background-color: #f3f3f5;
+}
+
+	.listvieweditlayout__content .tab-content {
+		background-color: #fff;
+		border: 1px solid #b3afbd;
+		padding: 20px 10px 0;
+	}
+
+	.listvieweditlayout__content .umb-tab-pane {
+		padding-bottom: 0;
+	}
+
+	.listvieweditlayout__content .umb-editor-sub-header {
+		margin-top: 0;
+	}
+
+		.listvieweditlayout__content .umb-editor-sub-header.-umb-sticky-bar {
+			display: none;
+		}

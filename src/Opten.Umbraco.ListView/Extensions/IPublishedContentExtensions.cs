@@ -24,6 +24,11 @@ namespace Opten.Umbraco.ListView.Extensions
 			return content.Children(c => c.IsInListView() == false);
 		}
 
+		public static IEnumerable<IContent> TreeChildren(this IContent content)
+		{
+			return content.Children().Where(c => c.IsInListView(content) == false);
+		}
+
 		public static IEnumerable<IPublishedContent> ListViewChildren(this IPublishedContent content, string alias)
 		{
 			return content.Children(c => c.IsInListView(alias));
@@ -34,6 +39,13 @@ namespace Opten.Umbraco.ListView.Extensions
 			var contentTypeAliases = content.Parent.FindGridListViewContentTypeAliases();
 
 			return contentTypeAliases.IsInListView(content.DocumentTypeAlias);
+		}
+
+		public static bool IsInListView(this IContent content, IContent parent)
+		{
+			var contentTypeAliases = parent.FindGridListViewContentTypeAliases();
+
+			return contentTypeAliases.IsInListView(content.ContentType.Alias);
 		}
 
 		public static bool IsInListView(this IPublishedContent content, string alias)
@@ -59,7 +71,7 @@ namespace Opten.Umbraco.ListView.Extensions
 		public static IEnumerable<string> FindGridListViewContentTypeAliases(this IPublishedContent content)
 		{
 			return FindGridListViewContentTypeAliases(gridListView =>
-				content.ContentType.PropertyTypes.Any(propertyType => propertyType.PropertyEditorAlias.Equals(gridListView.PropertyEditorAlias)),
+				content.Properties.Any(property => IsPropertyDataTypeDefinition(property, gridListView)),
 				"FindGridListViewContentTypeAliasesIPublishedContent" + content.Id
 			);
 		}
@@ -67,7 +79,7 @@ namespace Opten.Umbraco.ListView.Extensions
 		public static IEnumerable<string> FindGridListViewContentTypeAliases(this IContent content)
 		{
 			return FindGridListViewContentTypeAliases(gridListView =>
-				content.ContentType.PropertyTypes.Any(propertyType => propertyType.PropertyEditorAlias.Equals(gridListView.PropertyEditorAlias)),
+				content.Properties.Any(property => IsPropertyDataTypeDefinition(property, gridListView)),
 				"FindGridListViewContentTypeAliasesIContent" + content.Id
 			);
 		}
@@ -76,7 +88,7 @@ namespace Opten.Umbraco.ListView.Extensions
 		public static IEnumerable<string> FindGridListViewContentTypeAliases(this IPublishedContent content, string alias)
 		{
 			return FindGridListViewContentTypeAliases(gridListView =>
-				content.ContentType.PropertyTypes.FirstOrDefault(propertyType => propertyType.PropertyTypeAlias.Equals(alias)).DataTypeId.Equals(gridListView.Id),
+				IsPropertyDataTypeDefinition(content.Properties.FirstOrDefault(property => property.PropertyTypeAlias.Equals(alias)), gridListView),
 				"FindGridListViewContentTypeAliasesIPublishedContent" + content.Id + alias
 			);
 		}
@@ -84,9 +96,19 @@ namespace Opten.Umbraco.ListView.Extensions
 		public static IEnumerable<string> FindGridListViewContentTypeAliases(this IContent content, string alias)
 		{
 			return FindGridListViewContentTypeAliases(gridListView =>
-				content.ContentType.PropertyTypes.FirstOrDefault(propertyType => propertyType.Alias.Equals(alias)).PropertyEditorAlias.Equals(gridListView.PropertyEditorAlias),
+				IsPropertyDataTypeDefinition(content.Properties.FirstOrDefault(propertyType => propertyType.Alias.Equals(alias)), gridListView),
 				"FindGridListViewContentTypeAliasesIContent" + content.Id + alias
 			);
+		}
+
+		private static bool IsPropertyDataTypeDefinition(Property property, IDataTypeDefinition dataTypeDefinition)
+		{
+			return property.PropertyType.DataTypeDefinitionId.Equals(dataTypeDefinition.Id);
+		}
+
+		private static bool IsPropertyDataTypeDefinition(IPublishedProperty property, IDataTypeDefinition dataTypeDefinition)
+		{
+			return property.PropertyTypeAlias.Equals(dataTypeDefinition.Name); // Really dont know if this is correct!
 		}
 
 		public static ITemplate GetTemplate(this IPublishedContent content)
