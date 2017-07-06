@@ -6,7 +6,7 @@ using Umbraco.Core.Models;
 using Umbraco.Web.Models.ContentEditing;
 using Umbraco.Web.Trees;
 
-namespace ClassLibrary1
+namespace Opten.Umbraco.ListView
 {
 	public class TreeEventHandler : ApplicationEventHandler
 	{
@@ -39,7 +39,7 @@ namespace ClassLibrary1
 
 		private void ContentTreeController_TreeNodesRendering(TreeControllerBase sender, TreeNodesRenderingEventArgs e)
 		{
-			if (e.QueryStrings["application"].Equals("content") &&
+			if (e.QueryStrings.Contains(new System.Collections.Generic.KeyValuePair<string, string>("application", "content")) &&
 				e.QueryStrings["isDialog"].Equals("false") &&
 				string.IsNullOrWhiteSpace(e.QueryStrings["id"]) == false && 
 				e.QueryStrings["id"] != "-1")
