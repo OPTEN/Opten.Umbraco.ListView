@@ -17,7 +17,7 @@ namespace Opten.Umbraco.ListView.Events
 
 		private void DataTypeService_Saved(IDataTypeService sender, global::Umbraco.Core.Events.SaveEventArgs<global::Umbraco.Core.Models.IDataTypeDefinition> e)
 		{
-			ApplicationContext.Current.ApplicationCache.RuntimeCache.ClearCacheByKeySearch("OPTEN.FindGridListViewContentTypeAliases");
+			ApplicationContext.Current.ApplicationCache.RuntimeCache.ClearCacheByKeySearch("OPTEN.GetListViewPropertyEditors");
 		}
 	}
 }

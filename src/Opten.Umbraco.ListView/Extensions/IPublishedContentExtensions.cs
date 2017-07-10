@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Web.Mvc;
 using System.Web.Mvc.Html;
 using Umbraco.Core;
 using Umbraco.Core.Cache;
 using Umbraco.Core.Models;
+using Umbraco.Core.Models.PublishedContent;
 using Umbraco.Core.Services;
 using Umbraco.Web;
 
@@ -14,52 +16,44 @@ namespace Opten.Umbraco.ListView.Extensions
 	public static class IPublishedContentExtensions
 	{
 
-		public static IEnumerable<IPublishedContent> ListViewChildren(this IPublishedContent content)
+		public static IEnumerable<IPublishedContent> ListViewChildren(this IPublishedContent content, string alias = null)
 		{
-			return content.Children(c => c.IsInListView());
+			return content.ListViewOrTreeChildren(true, alias);
 		}
 
 		public static IEnumerable<IPublishedContent> TreeChildren(this IPublishedContent content)
 		{
-			return content.Children(c => c.IsInListView() == false);
+			return content.ListViewOrTreeChildren(false);
+		}
+
+		public static IEnumerable<IPublishedContent> ListViewOrTreeChildren(this IPublishedContent content, bool isListView, string alias = null)
+		{
+			var contentTypeAliases = content.FindListViewContentTypeAliases(alias);
+
+			return content.Children(c => contentTypeAliases.IsInListView(c.DocumentTypeAlias) == isListView);
+		}
+
+
+		public static IEnumerable<IContent> ListViewChildren(this IContent content, string alias = null)
+		{
+			return content.ListViewOrTreeChildren(true, alias);
 		}
 
 		public static IEnumerable<IContent> TreeChildren(this IContent content)
 		{
-			return content.Children().Where(c => c.IsInListView(content) == false);
+			return content.ListViewOrTreeChildren(false);
 		}
 
-		public static IEnumerable<IPublishedContent> ListViewChildren(this IPublishedContent content, string alias)
+		public static IEnumerable<IContent> ListViewOrTreeChildren(this IContent content, bool isListView, string alias = null)
 		{
-			return content.Children(c => c.IsInListView(alias));
-		}
+			var contentTypeAliases = content.FindGridListViewContentTypeAliases(alias);
 
-		public static bool IsInListView(this IPublishedContent content)
-		{
-			var contentTypeAliases = content.Parent.FindGridListViewContentTypeAliases();
-
-			return contentTypeAliases.IsInListView(content.DocumentTypeAlias);
-		}
-
-		public static bool IsInListView(this IContent content, IContent parent)
-		{
-			var contentTypeAliases = parent.FindGridListViewContentTypeAliases();
-
-			return contentTypeAliases.IsInListView(content.ContentType.Alias);
-		}
-
-		public static bool IsInListView(this IPublishedContent content, string alias)
-		{
-			var contentTypeAliases = content.Parent.FindGridListViewContentTypeAliases(alias);
-
-			return contentTypeAliases.IsInListView(content.DocumentTypeAlias);
+			return content.Children().Where(c => contentTypeAliases.IsInListView(c.ContentType.Alias) == isListView);
 		}
 
 		public static bool IsInListView(this IContent content, string contentTypeAlias)
 		{
-			var contentTypeAliases = content.FindGridListViewContentTypeAliases();
-
-			return contentTypeAliases.IsInListView(contentTypeAlias);
+			return content.FindGridListViewContentTypeAliases().IsInListView(contentTypeAlias);
 		}
 
 		public static bool IsInListView(this IEnumerable<string> contentTypeAliases, string contentTypeAlias)
@@ -68,74 +62,57 @@ namespace Opten.Umbraco.ListView.Extensions
 					contentTypeAliases.Contains(contentTypeAlias, StringComparer.OrdinalIgnoreCase);
 		}
 
-		public static IEnumerable<string> FindGridListViewContentTypeAliases(this IPublishedContent content)
+
+		public static IEnumerable<string> FindListViewContentTypeAliases(this IPublishedContent content, string alias = null)
 		{
-			return FindGridListViewContentTypeAliases(gridListView =>
-				content.Properties.Any(property => IsPropertyDataTypeDefinition(property, gridListView)),
-				"FindGridListViewContentTypeAliasesIPublishedContent" + content.Id
-			);
+			return content.Properties
+				.Where(property => alias == null || property.PropertyTypeAlias.Equals(alias))
+				.Select(property =>
+				{
+					var prop = property.GetType().GetField("PropertyType");
+					var type = (PublishedPropertyType)prop.GetValue(property);
+
+					return type.DataTypeId;
+				})
+				.ContentTypeAliases();
 		}
 
-		public static IEnumerable<string> FindGridListViewContentTypeAliases(this IContent content)
+
+		public static IEnumerable<string> FindGridListViewContentTypeAliases(this IContent content, string alias = null)
 		{
-			return FindGridListViewContentTypeAliases(gridListView =>
-				content.Properties.Any(property => IsPropertyDataTypeDefinition(property, gridListView)),
-				"FindGridListViewContentTypeAliasesIContent" + content.Id
-			);
+			return content.Properties
+				.Where(property => alias == null || property.PropertyType.Alias.Equals(alias))
+				.Select(property => property.PropertyType.DataTypeDefinitionId)
+				.ContentTypeAliases();
 		}
 
-
-		public static IEnumerable<string> FindGridListViewContentTypeAliases(this IPublishedContent content, string alias)
+		public static IEnumerable<string> ContentTypeAliases(this IEnumerable<int> dataTypeDefinitionIds)
 		{
-			return FindGridListViewContentTypeAliases(gridListView =>
-				IsPropertyDataTypeDefinition(content.Properties.FirstOrDefault(property => property.PropertyTypeAlias.Equals(alias)), gridListView),
-				"FindGridListViewContentTypeAliasesIPublishedContent" + content.Id + alias
-			);
+			return GetListViewPropertyEditors()
+				.Where(propertyEditor => dataTypeDefinitionIds.Any(dataTypeDefinitionId => dataTypeDefinitionId == propertyEditor.Key))
+				.SelectMany(propertyEditor => propertyEditor.Value)
+				.Distinct();
 		}
 
-		public static IEnumerable<string> FindGridListViewContentTypeAliases(this IContent content, string alias)
+		public static Dictionary<int, IEnumerable<string>> GetListViewPropertyEditors()
 		{
-			return FindGridListViewContentTypeAliases(gridListView =>
-				IsPropertyDataTypeDefinition(content.Properties.FirstOrDefault(propertyType => propertyType.Alias.Equals(alias)), gridListView),
-				"FindGridListViewContentTypeAliasesIContent" + content.Id + alias
-			);
-		}
-
-		private static bool IsPropertyDataTypeDefinition(Property property, IDataTypeDefinition dataTypeDefinition)
-		{
-			return property.PropertyType.DataTypeDefinitionId.Equals(dataTypeDefinition.Id);
-		}
-
-		private static bool IsPropertyDataTypeDefinition(IPublishedProperty property, IDataTypeDefinition dataTypeDefinition)
-		{
-			return property.PropertyTypeAlias.Equals(dataTypeDefinition.Name); // Really dont know if this is correct!
+			return ApplicationContext.Current.ApplicationCache.RuntimeCache
+				.GetCacheItem<Dictionary<int, IEnumerable<string>>>(
+					"OPTEN.GetListViewPropertyEditors",
+					() => ApplicationContext.Current.Services.DataTypeService.GetDataTypeDefinitionByPropertyEditorAlias(Constants.ListViewEditorAlias)
+							.Select(listView => new KeyValuePair<int, IEnumerable<string>>(
+								listView.Id,
+								ApplicationContext.Current.Services.DataTypeService.GetPreValuesCollectionByDataTypeId(listView.Id)
+									.PreValuesAsDictionary[Constants.ContentTypeAliasesPreValueKey].Value
+									.Split(','))
+							).ToDictionary(x => x.Key, x => x.Value),
+					TimeSpan.FromMinutes(10)
+				);
 		}
 
 		public static ITemplate GetTemplate(this IPublishedContent content)
 		{
 			return ApplicationContext.Current.Services.FileService.GetTemplate(content.TemplateId);
-		}
-
-		private static IEnumerable<string> FindGridListViewContentTypeAliases(Func<IDataTypeDefinition, bool> predicate, string key)
-		{
-			return ApplicationContext.Current.ApplicationCache.RuntimeCache
-				.GetCacheItem<IEnumerable<string>>("OPTEN.FindGridListViewContentTypeAliases." + key,
-				() =>
-				{
-					var dataTypeService = ApplicationContext.Current.Services.DataTypeService;
-
-					var contentTypeAliases = new List<string>();
-					foreach (var gridListView in dataTypeService.GetDataTypeDefinitionByPropertyEditorAlias(Constants.ListViewEditorAlias).Where(predicate))
-					{
-						foreach (var contentTypeAlias in dataTypeService.GetPreValuesCollectionByDataTypeId(gridListView.Id).PreValuesAsDictionary[Constants.ContentTypeAliasesPreValueKey].Value.Split(','))
-						{
-							contentTypeAliases.Add(contentTypeAlias);
-						}
-					}
-
-					return contentTypeAliases.Distinct();
-				}, TimeSpan.FromMinutes(10));
-
 		}
 	}
 }
