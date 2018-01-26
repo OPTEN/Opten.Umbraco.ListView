@@ -41,27 +41,30 @@ namespace Opten.Umbraco.ListView
 		{
 			if (e.QueryStrings.Contains(new System.Collections.Generic.KeyValuePair<string, string>("application", "content")) &&
 				e.QueryStrings["isDialog"].Equals("false") &&
-				string.IsNullOrWhiteSpace(e.QueryStrings["id"]) == false && 
+				string.IsNullOrWhiteSpace(e.QueryStrings["id"]) == false &&
 				e.QueryStrings["id"] != "-1")
 			{
 				var content = sender.Services.ContentService.GetById(int.Parse(e.QueryStrings["id"]));
 
-				for(var i = e.Nodes.Count - 1; i > -1; i--)
+				if (content != null)
 				{
-					var treeNode = e.Nodes[i];
-
-					if(treeNode.AdditionalData.ContainsKey("contentType"))
+					for (var i = e.Nodes.Count - 1; i > -1; i--)
 					{
-						if(content.IsInListView(treeNode.AdditionalData["contentType"].ToString()))
-						{
-							e.Nodes.RemoveAt(i);
-							continue;
-						}
+						var treeNode = e.Nodes[i];
 
-						if(treeNode.HasChildren)
+						if (treeNode.AdditionalData.ContainsKey("contentType"))
 						{
-							var node = sender.Services.ContentService.GetById(int.Parse(treeNode.Id.ToString()));
-							treeNode.HasChildren = node.TreeChildren().Any();
+							if (content.IsInListView(treeNode.AdditionalData["contentType"].ToString()))
+							{
+								e.Nodes.RemoveAt(i);
+								continue;
+							}
+
+							if (treeNode.HasChildren)
+							{
+								var node = sender.Services.ContentService.GetById(int.Parse(treeNode.Id.ToString()));
+								treeNode.HasChildren = node.TreeChildren().Any();
+							}
 						}
 					}
 				}
